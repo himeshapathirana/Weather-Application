@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <title>Weather Report</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: url('images/background.jpg'); /* Update the path as needed */
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+            position: relative;
+        }
+        .container {
+            position: relative;
+            width: 400px;
+            padding: 20px;
+            background: rgba(22, 22, 22, 0.1);
+            backdrop-filter: blur(50px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            color: #fff;
+            transition: height 0.6s ease;
+            text-align: center;
+        }
+        .search-box {
+            position: relative;
+            width: 100%;
+            height: 55px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .search-box input {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            outline: none;
+            border-radius: 10px;
+            font-size: 22px;
+            color: #fff;
+            font-weight: 500;
+            text-transform: uppercase;
+            padding: 0 48px 0 42px;
+        }
+        .search-box input::placeholder {
+            color: #fff;
+            text-transform: capitalize;
+        }
+        .search-box i {
+            position: absolute;
+            left: 10px;
+            font-size: 28px;
+        }
+        .search-box button {
+            position: absolute;
+            right: 0;
+            width: 40px;
+            height: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            font-size: 28px;
+            color: #fff;
+            cursor: pointer;
+        }
+        .weather-box, .weather-details, .not-found {
+            overflow: hidden;
+            visibility: hidden;
+        }
+        .weather-box.active, .weather-details.active, .not-found.active {
+            visibility: visible;
+        }
+        .weather-box .box, .not-found .box {
+            transform: translateY(-100%);
+        }
+        .weather-box.active .box, .not-found.active .box {
+            transform: translateY(0%);
+            transition: transform 1s ease;
+            transition-delay: 0.6s;
+        }
+        .weather-box .box .info-weather {
+            transform: translateY(-120%);
+        }
+        .container.active .weather-box .box .info-weather,
+        .container.active .weather-details .humidity .info-humidity,
+        .container.active .weather-details .wind .info-wind {
+            transform: translateY(0%);
+            transition: transform 1s ease;
+        }
+        .weather-box {
+            margin: 40px 0;
+        }
+        .weather-box i {
+            font-size: 96px;
+            margin-bottom: 20px;
+        }
+        .weather-box .temperature {
+            font-size: 64px;
+            font-weight: 700;
+            margin: 20px 0;
+        }
+        .weather-box .temperature span {
+            font-size: 24px;
+        }
+        .weather-box .description {
+            font-size: 22px;
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+        .weather-details {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .weather-details div {
+            display: flex;
+            align-items: center;
+        }
+        .weather-details i {
+            font-size: 56px;
+            margin-right: 10px;
+        }
+        .weather-details span {
+            font-size: 22px;
+            font-weight: 500;
+        }
+        .not-found {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .not-found img {
+            width: 65%;
+        }
+        .not-found p {
+            font-size: 22px;
+            font-weight: 500;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="search-box">
+            <i class="bx bxs-map"></i>
+            <input type="text" placeholder="Enter your location">
+            <button class="bx bx-search"></button>
+        </div>
+        <div class="weather-box">
+            <div class="box">
+                <div class="info-weather">
+                    <div class="weather">
+                        <i class="bx bxs-cloud"></i>
+                        <p class="temperature">16<span>°C</span></p>
+                        <p class="description">Broken Clouds</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="weather-details">
+            <div class="humidity">
+                <i class="bx bx-water"></i>
+                <span>0%</span>
+                <p>Humidity</p>
+            </div>
+            <div class="wind">
+                <i class="bx bx-wind"></i>
+                <span>0Km/h</span>
+                <p>Wind Speed</p>
+            </div>
+        </div>
+        <div class="not-found">
+            <div class="box">
+                <img src="images/404.png" alt="404 Not Found">
+                <p>Oops! Location not found!</p>
+            </div>
+        </div>
+    </div>
+    <script>
+        const container = document.querySelector(".container");
+        const searchButton = document.querySelector(".search-box button");
+        const weatherBox = document.querySelector(".weather-box");
+        const weatherDetails = document.querySelector(".weather-details");
+        const error404 = document.querySelector(".not-found");
+
+        searchButton.addEventListener("click", () => {
+            const APIKey = "1de8876972bd1a69dc3332b45c1c5bd3";
+            const city = document.querySelector(".search-box input").value;
+
+            if (city === "") return;
+
+            fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${APIKey}`)
+                .then(response => response.json())
+                .then(json => {
+                    if (json.cod === "404") {
+                        container.style.height = "400px";
+                        weatherBox.style.display = "none";
+                        weatherDetails.style.display = "none";
+                        error404.style.display = "block";
+                        error404.classList.add("active");
+                        return;
+                    }
+
+                    error404.style.display = "none";
+                    error404.classList.remove("active");
+
+                    //const weatherIcon = document.querySelector(".weather-box i");
+                    const temperature = document.querySelector(".weather-box .temperature");
+                    const description = document.querySelector(".weather-box .description");
+                    const humidity = document.querySelector(".weather-details .humidity span");
+                    const wind = document.querySelector(".weather-details .wind span");
+                    const weatherIcon = document.querySelector(".weather-box .weather i");
+
+                    // Update weather icon based on weather condition
+                    switch (json.weather[0].main) {
+                        case "Clear":
+                            weatherIcon.className = "bx bxs-sun";
+                            break;
+                        case "Rain":
+                            weatherIcon.className = "bx bxs-rain";
+                            break;
+                        case "Snow":
+                            weatherIcon.className = "bx bxs-snowflake";
+                            break;
+                        case "Clouds":
+                            weatherIcon.className = "bx bxs-cloud";
+                            break;
+                        case "Haze":
+                            weatherIcon.className = "bx bxs-mist";
+                            break;
+                        default:
+                            weatherIcon.className = "bx bxs-question-mark";
+                    }
+
+                    temperature.innerHTML = `${Math.round(json.main.temp)}<span>°C</span>`;
+                    description.innerHTML = `${json.weather[0].description}`;
+                    humidity.innerHTML = `${json.main.humidity}%`;
+                    wind.innerHTML = `${Math.round(json.wind.speed)}Km/h`;
+
+                    weatherBox.style.display = "";
+                    weatherDetails.style.display = "";
+                    weatherBox.classList.add("active");
+                    weatherDetails.classList.add("active");
+                    container.style.height = "590px";
+                });
+        });
+    </script>
+</body>
+</html>
